@@ -1,0 +1,288 @@
+---
+title: Data Visualization Chapter 2-4
+author: wyih
+date: '2019-09-26'
+slug: test
+categories:
+  - R
+  - Books
+tags:
+  - socviz
+subtitle: ''
+summary: ''
+authors: []
+lastmod: '2019-09-26T00:02:42+08:00'
+output:
+  blogdown::html_page:
+    toc: true
+featured: no
+image:
+  caption: ''
+  focal_point: ''
+  preview_only: no
+projects: []
+---
+
+
+<div id="TOC">
+<ul>
+<li><a href="#chapter-2">Chapter 2</a></li>
+<li><a href="#chapter-3">Chapter 3</a><ul>
+<li><a href="#wrong-way-to-set-color">Wrong way to set color</a></li>
+<li><a href="#aesthetics-can-be-mapped-per-geom">Aesthetics Can Be Mapped per Geom</a></li>
+<li><a href="#save-plots">Save plots</a></li>
+</ul></li>
+<li><a href="#chapter-4">Chapter 4</a><ul>
+<li><a href="#group-data-and-the-group-aesthetic">Group data and the “Group” Aesthetic</a></li>
+<li><a href="#facet-to-make-small-multiples">Facet to make small multiples</a></li>
+<li><a href="#geoms-can-transform-data">Geoms can transform data</a></li>
+<li><a href="#histgrams-and-density-plots">Histgrams and Density Plots</a></li>
+<li><a href="#avoid-transformations-when-necessary">Avoid Transformations When Necessary</a></li>
+</ul></li>
+</ul>
+</div>
+
+<div id="chapter-2" class="section level2">
+<h2>Chapter 2</h2>
+<p><code>geom_point</code></p>
+<pre class="r"><code>p &lt;- ggplot(data = gapminder,
+            mapping = aes(x = gdpPercap, y = lifeExp))
+p + geom_point()</code></pre>
+<p><img src="/post/2019-09-26-Data-Visualization-Chapter-2-4_files/figure-html/cars-1.png" width="768" /></p>
+</div>
+<div id="chapter-3" class="section level2">
+<h2>Chapter 3</h2>
+<p><code>geom_smooth</code></p>
+<pre><code>## `geom_smooth()` using method = &#39;gam&#39; and formula &#39;y ~ s(x, bs = &quot;cs&quot;)&#39;</code></pre>
+<p><img src="/post/2019-09-26-Data-Visualization-Chapter-2-4_files/figure-html/pressure-1.png" width="768" /></p>
+<pre class="r"><code>p &lt;- ggplot(data = gapminder, mapping = aes(x = gdpPercap, y = lifeExp))
+p + geom_point() + geom_smooth()</code></pre>
+<pre><code>## `geom_smooth()` using method = &#39;gam&#39; and formula &#39;y ~ s(x, bs = &quot;cs&quot;)&#39;</code></pre>
+<p><img src="/post/2019-09-26-Data-Visualization-Chapter-2-4_files/figure-html/unnamed-chunk-1-1.png" width="768" /></p>
+<p><code>scale_x_log10</code></p>
+<pre class="r"><code>p &lt;- ggplot(data = gapminder, mapping = aes(x = gdpPercap, y = lifeExp))
+p + geom_point() + geom_smooth(method = &quot;gam&quot;) + scale_x_log10()</code></pre>
+<p><img src="/post/2019-09-26-Data-Visualization-Chapter-2-4_files/figure-html/unnamed-chunk-2-1.png" width="768" /></p>
+<p><code>scales::dollar</code></p>
+<pre class="r"><code>p &lt;- ggplot(data = gapminder, mapping = aes(x = gdpPercap, y = lifeExp))
+p + geom_point() +
+geom_smooth(method = &quot;gam&quot;) +
+scale_x_log10(labels = scales::dollar)</code></pre>
+<p><img src="/post/2019-09-26-Data-Visualization-Chapter-2-4_files/figure-html/unnamed-chunk-3-1.png" width="768" /></p>
+<div id="wrong-way-to-set-color" class="section level3">
+<h3>Wrong way to set color</h3>
+<pre class="r"><code>p &lt;- ggplot(data = gapminder, mapping = aes(x = gdpPercap, y = lifeExp,
+color = &quot;purple&quot;))
+p + geom_point() + geom_smooth(method = &quot;loess&quot;) + scale_x_log10()</code></pre>
+<p><img src="/post/2019-09-26-Data-Visualization-Chapter-2-4_files/figure-html/unnamed-chunk-4-1.png" width="768" /></p>
+<p>The <code>aes()</code> function is for mappings only. Do not use it to change properties to a particular value. If we want to set a property, we do it in the geom_ we are using, and outside the <code>mapping =aes(...)</code>step.</p>
+<pre class="r"><code>p &lt;- ggplot(data = gapminder, mapping = aes(x = gdpPercap, y = lifeExp))
+p + geom_point(color = &quot;purple&quot;) + geom_smooth(method = &quot;loess&quot;) + scale_x_log10()</code></pre>
+<p><img src="/post/2019-09-26-Data-Visualization-Chapter-2-4_files/figure-html/unnamed-chunk-5-1.png" width="768" />
+The various <code>geom_</code> functions can take many other arguments that will affect how the plot looks but do not involve mapping variables to aesthetic elements.
+“alpha” is an aesthetic property that points (and some other plot elements) have, and to which variables can be mapped. It controls how transparent the object will appear when drawn. It’s measured on a scale of zero to one.</p>
+<pre class="r"><code>p &lt;- ggplot(data = gapminder, mapping = aes(x = gdpPercap, y = lifeExp))
+p + geom_point(alpha = 0.3) + geom_smooth(color = &quot;orange&quot;, se = FALSE,
+                                          size = 8, method = &quot;lm&quot;) + scale_x_log10()</code></pre>
+<p><img src="/post/2019-09-26-Data-Visualization-Chapter-2-4_files/figure-html/unnamed-chunk-6-1.png" width="768" /></p>
+<pre class="r"><code>p &lt;- ggplot(data = gapminder, mapping = aes(x = gdpPercap, y=lifeExp))
+p + geom_point(alpha = 0.3) +
+  geom_smooth(method = &quot;gam&quot;) +
+  scale_x_log10(labels = scales::dollar) +
+  labs(x = &quot;GDP Per Capita&quot;, y = &quot;Life Expectancy in Years&quot;,
+       title = &quot;Economic Growth and Life Expectancy&quot;,
+       subtitle = &quot;Data points are country-years&quot;,
+       caption = &quot;Source: Gapminder.&quot;)</code></pre>
+<p><img src="/post/2019-09-26-Data-Visualization-Chapter-2-4_files/figure-html/unnamed-chunk-7-1.png" width="768" /></p>
+<pre class="r"><code>p &lt;- ggplot(data = gapminder, mapping = aes(x = gdpPercap, y = lifeExp,
+                                            color = continent))
+p + geom_point() + geom_smooth(method = &quot;loess&quot;) + scale_x_log10()</code></pre>
+<p><img src="/post/2019-09-26-Data-Visualization-Chapter-2-4_files/figure-html/unnamed-chunk-8-1.png" width="768" />
+The color of the standard error ribbon is controlled by the fill aesthetic.</p>
+<pre class="r"><code>p &lt;- ggplot(data = gapminder, mapping = aes(x = gdpPercap, y = lifeExp,
+                                            color = continent, fill = continent))
+p + geom_point() + geom_smooth(method = &quot;loess&quot;) + scale_x_log10()</code></pre>
+<p><img src="/post/2019-09-26-Data-Visualization-Chapter-2-4_files/figure-html/unnamed-chunk-9-1.png" width="768" /></p>
+</div>
+<div id="aesthetics-can-be-mapped-per-geom" class="section level3">
+<h3>Aesthetics Can Be Mapped per Geom</h3>
+<pre class="r"><code>p &lt;- ggplot(data = gapminder, mapping = aes(x = gdpPercap, y = lifeExp))
+p + geom_point(mapping = aes(color = factor(year))) + 
+  geom_smooth(method = &quot;loess&quot;) +
+  scale_x_log10()</code></pre>
+<p><img src="/post/2019-09-26-Data-Visualization-Chapter-2-4_files/figure-html/unnamed-chunk-10-1.png" width="768" /></p>
+<p>Order doesn’t matter!!!
+Besides <code>scale_x_log10()</code>, you can try <code>scale_x_sqrt()</code> and <code>scale_x_reverse()</code></p>
+<pre class="r"><code>p &lt;- ggplot(data = gapminder, mapping = aes(x = pop, y = lifeExp))
+p + geom_smooth(method = &quot;loess&quot;) + 
+  geom_point(mapping = aes(color = continent)) + 
+  scale_x_reverse(labels = scales::number)</code></pre>
+<p><img src="/post/2019-09-26-Data-Visualization-Chapter-2-4_files/figure-html/unnamed-chunk-11-1.png" width="768" /></p>
+<pre class="r"><code>p &lt;- ggplot(data = gapminder, mapping = aes(x = gdpPercap, y = lifeExp))
+p + geom_point(mapping = aes(color = log(pop))) + scale_x_log10()</code></pre>
+<p><img src="/post/2019-09-26-Data-Visualization-Chapter-2-4_files/figure-html/unnamed-chunk-12-1.png" width="768" /></p>
+</div>
+<div id="save-plots" class="section level3">
+<h3>Save plots</h3>
+<pre class="r"><code>p_out &lt;-  p + geom_point() + geom_smooth(method = &quot;loess&quot;) + scale_x_log10()
+ggsave(&quot;my_figure.pdf&quot;, plot = p_out)</code></pre>
+</div>
+</div>
+<div id="chapter-4" class="section level2">
+<h2>Chapter 4</h2>
+<div id="group-data-and-the-group-aesthetic" class="section level3">
+<h3>Group data and the “Group” Aesthetic</h3>
+<pre class="r"><code>p &lt;- ggplot(data = gapminder, mapping = aes(x = year, y = gdpPercap))
+p + geom_line()</code></pre>
+<p><img src="/post/2019-09-26-Data-Visualization-Chapter-2-4_files/figure-html/unnamed-chunk-14-1.png" width="768" />
+use the <code>group</code> aesthetic to tell ggplot explicitly about this country-level structure</p>
+<pre class="r"><code>p &lt;- ggplot(data = gapminder, mapping = aes(x = year, y = gdpPercap))
+p + geom_line(aes(group = country))</code></pre>
+<p><img src="/post/2019-09-26-Data-Visualization-Chapter-2-4_files/figure-html/unnamed-chunk-15-1.png" width="768" /></p>
+</div>
+<div id="facet-to-make-small-multiples" class="section level3">
+<h3>Facet to make small multiples</h3>
+<p>use <code>facet_wrap()</code> to split our plot by <code>continent</code>.</p>
+<pre class="r"><code>p &lt;- ggplot(data = gapminder, mapping = aes(x = year, y = gdpPercap))
+p + geom_line(aes(group = country)) + facet_wrap(~continent)</code></pre>
+<p><img src="/post/2019-09-26-Data-Visualization-Chapter-2-4_files/figure-html/unnamed-chunk-16-1.png" width="768" />
+Add another enhancements</p>
+<pre class="r"><code>p &lt;- ggplot(data = gapminder, mapping = aes(x = year, y = gdpPercap))
+p + geom_line(color=&quot;gray70&quot;, aes(group = country)) + 
+  geom_smooth(size= 1.1, method = &quot;loess&quot;, se = FALSE) +
+  scale_y_log10(labels=scales::dollar) +
+  facet_wrap(~continent , ncol = 5) +
+  labs(x = &quot;Year&quot;,
+       y = &quot;GDP per capita on Five Continents&quot;)</code></pre>
+<p><img src="/post/2019-09-26-Data-Visualization-Chapter-2-4_files/figure-html/unnamed-chunk-17-1.png" width="768" /></p>
+<p>Use <code>facet_grid</code></p>
+<pre class="r"><code>p &lt;- ggplot(data = gss_sm, mapping = aes(x = age, y = childs))
+p + geom_point(alpha = 0.2) +
+  geom_smooth() + 
+  facet_grid(sex ~ race)</code></pre>
+<pre><code>## `geom_smooth()` using method = &#39;gam&#39; and formula &#39;y ~ s(x, bs = &quot;cs&quot;)&#39;</code></pre>
+<pre><code>## Warning: Removed 18 rows containing non-finite values (stat_smooth).</code></pre>
+<pre><code>## Warning: Removed 18 rows containing missing values (geom_point).</code></pre>
+<p><img src="/post/2019-09-26-Data-Visualization-Chapter-2-4_files/figure-html/unnamed-chunk-18-1.png" width="768" /></p>
+<pre class="r"><code>p &lt;- ggplot(data = gss_sm, mapping = aes(x = age, y = childs))
+p + geom_point(alpha = 0.2) +
+  geom_smooth() + 
+  facet_grid(sex ~ race + degree)</code></pre>
+<pre><code>## `geom_smooth()` using method = &#39;loess&#39; and formula &#39;y ~ x&#39;</code></pre>
+<pre><code>## Warning: Removed 18 rows containing non-finite values (stat_smooth).</code></pre>
+<pre><code>## Warning in simpleLoess(y, x, w, span, degree = degree, parametric =
+## parametric, : span too small. fewer data values than degrees of freedom.</code></pre>
+<pre><code>## Warning in simpleLoess(y, x, w, span, degree = degree, parametric =
+## parametric, : pseudoinverse used at 62.87</code></pre>
+<pre><code>## Warning in simpleLoess(y, x, w, span, degree = degree, parametric =
+## parametric, : neighborhood radius 2.13</code></pre>
+<pre><code>## Warning in simpleLoess(y, x, w, span, degree = degree, parametric =
+## parametric, : reciprocal condition number 0</code></pre>
+<pre><code>## Warning in simpleLoess(y, x, w, span, degree = degree, parametric =
+## parametric, : There are other near singularities as well. 582.26</code></pre>
+<pre><code>## Warning in predLoess(object$y, object$x, newx = if
+## (is.null(newdata)) object$x else if (is.data.frame(newdata))
+## as.matrix(model.frame(delete.response(terms(object)), : span too small.
+## fewer data values than degrees of freedom.</code></pre>
+<pre><code>## Warning in predLoess(object$y, object$x, newx = if
+## (is.null(newdata)) object$x else if (is.data.frame(newdata))
+## as.matrix(model.frame(delete.response(terms(object)), : pseudoinverse used
+## at 62.87</code></pre>
+<pre><code>## Warning in predLoess(object$y, object$x, newx = if
+## (is.null(newdata)) object$x else if (is.data.frame(newdata))
+## as.matrix(model.frame(delete.response(terms(object)), : neighborhood radius
+## 2.13</code></pre>
+<pre><code>## Warning in predLoess(object$y, object$x, newx = if
+## (is.null(newdata)) object$x else if (is.data.frame(newdata))
+## as.matrix(model.frame(delete.response(terms(object)), : reciprocal
+## condition number 0</code></pre>
+<pre><code>## Warning in predLoess(object$y, object$x, newx = if
+## (is.null(newdata)) object$x else if (is.data.frame(newdata))
+## as.matrix(model.frame(delete.response(terms(object)), : There are other
+## near singularities as well. 582.26</code></pre>
+<pre><code>## Warning: Removed 18 rows containing missing values (geom_point).</code></pre>
+<p><img src="/post/2019-09-26-Data-Visualization-Chapter-2-4_files/figure-html/unnamed-chunk-19-1.png" width="768" /></p>
+</div>
+<div id="geoms-can-transform-data" class="section level3">
+<h3>Geoms can transform data</h3>
+<pre class="r"><code>p &lt;- ggplot(data = gss_sm, mapping = aes(x = bigregion))
+p + geom_bar()</code></pre>
+<p><img src="/post/2019-09-26-Data-Visualization-Chapter-2-4_files/figure-html/unnamed-chunk-20-1.png" width="768" /></p>
+<p><code>geom_bar</code> called the default <code>stat_</code> function associated with it,<code>stat_count()</code>.</p>
+<pre class="r"><code>p &lt;- ggplot(data = gss_sm, mapping = aes(x = bigregion))
+p + geom_bar(mapping = aes(y = ..prop..))</code></pre>
+<p><img src="/post/2019-09-26-Data-Visualization-Chapter-2-4_files/figure-html/unnamed-chunk-21-1.png" width="768" /></p>
+<pre class="r"><code>p &lt;- ggplot(data = gss_sm, mapping = aes(x = bigregion))
+p + geom_bar(mapping = aes(y = ..prop.., group = 1))</code></pre>
+<p><img src="/post/2019-09-26-Data-Visualization-Chapter-2-4_files/figure-html/unnamed-chunk-22-1.png" width="768" /></p>
+<pre class="r"><code>table(gss_sm$religion)</code></pre>
+<pre><code>## 
+## Protestant   Catholic     Jewish       None      Other 
+##       1371        649         51        619        159</code></pre>
+<pre class="r"><code>p &lt;- ggplot(data = gss_sm, mapping = aes(x = religion, color = religion))
+p + geom_bar()</code></pre>
+<p><img src="/post/2019-09-26-Data-Visualization-Chapter-2-4_files/figure-html/unnamed-chunk-24-1.png" width="768" /></p>
+<pre class="r"><code>p &lt;- ggplot(data = gss_sm, mapping = aes(x = religion, fill = religion))
+p + geom_bar() + guides(fill = FALSE)</code></pre>
+<p><img src="/post/2019-09-26-Data-Visualization-Chapter-2-4_files/figure-html/unnamed-chunk-24-2.png" width="768" /></p>
+<pre class="r"><code>p + geom_bar()</code></pre>
+<p><img src="/post/2019-09-26-Data-Visualization-Chapter-2-4_files/figure-html/unnamed-chunk-24-3.png" width="768" /></p>
+<pre class="r"><code>p &lt;- ggplot(data = gss_sm, mapping = aes(x = bigregion, fill = religion))
+p + geom_bar()</code></pre>
+<p><img src="/post/2019-09-26-Data-Visualization-Chapter-2-4_files/figure-html/unnamed-chunk-25-1.png" width="768" /></p>
+<pre class="r"><code>p &lt;- ggplot(data = gss_sm, mapping = aes(x = bigregion, fill = religion))
+p + geom_bar(position = &quot;fill&quot;)</code></pre>
+<p><img src="/post/2019-09-26-Data-Visualization-Chapter-2-4_files/figure-html/unnamed-chunk-26-1.png" width="768" /></p>
+<p>if you want separate bars</p>
+<pre class="r"><code>p &lt;- ggplot(data = gss_sm, mapping = aes(x = bigregion, fill = religion))
+p + geom_bar(position = &quot;dodge&quot;, mapping = aes(y = ..prop..,
+                                               group = religion))</code></pre>
+<p><img src="/post/2019-09-26-Data-Visualization-Chapter-2-4_files/figure-html/unnamed-chunk-27-1.png" width="768" />
+However, they don’t sum to one within each region. They sum to one across regions.</p>
+<pre class="r"><code>p &lt;- ggplot(data = gss_sm, mapping = aes(x = religion))
+p + geom_bar(position = &quot;dodge&quot;, mapping = aes(y = ..prop..,
+                                               group = bigregion)) +
+  facet_wrap(~bigregion, ncol=1)</code></pre>
+<p><img src="/post/2019-09-26-Data-Visualization-Chapter-2-4_files/figure-html/unnamed-chunk-28-1.png" width="768" /></p>
+</div>
+<div id="histgrams-and-density-plots" class="section level3">
+<h3>Histgrams and Density Plots</h3>
+<pre class="r"><code>p &lt;- ggplot(data = midwest, mapping = aes( x = area))
+p + geom_histogram()</code></pre>
+<pre><code>## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.</code></pre>
+<p><img src="/post/2019-09-26-Data-Visualization-Chapter-2-4_files/figure-html/unnamed-chunk-29-1.png" width="768" /></p>
+<pre class="r"><code>p &lt;- ggplot(data = midwest, mapping = aes( x = area))
+p + geom_histogram(bins = 10)</code></pre>
+<p><img src="/post/2019-09-26-Data-Visualization-Chapter-2-4_files/figure-html/unnamed-chunk-30-1.png" width="768" /></p>
+<pre class="r"><code>oh_wi &lt;- c(&quot;OH&quot;, &quot;WI&quot;)
+p &lt;- ggplot(data = subset(midwest, subset = state %in% oh_wi),
+            mapping = aes(x = percollege, fill = state))
+p + geom_histogram(alpha = 0.4, bins = 20)</code></pre>
+<p><img src="/post/2019-09-26-Data-Visualization-Chapter-2-4_files/figure-html/unnamed-chunk-31-1.png" width="768" /></p>
+<pre class="r"><code>p &lt;- ggplot(data = midwest, mapping = aes( x = area))
+p + geom_density()</code></pre>
+<p><img src="/post/2019-09-26-Data-Visualization-Chapter-2-4_files/figure-html/unnamed-chunk-32-1.png" width="768" /></p>
+<pre class="r"><code>p &lt;- ggplot(data = midwest, mapping = aes( x = area, fill = state,
+                                           color = state))
+p + geom_density(alpha = 0.3)</code></pre>
+<p><img src="/post/2019-09-26-Data-Visualization-Chapter-2-4_files/figure-html/unnamed-chunk-33-1.png" width="768" /></p>
+</div>
+<div id="avoid-transformations-when-necessary" class="section level3">
+<h3>Avoid Transformations When Necessary</h3>
+<pre class="r"><code>p &lt;- ggplot(data = titanic, mapping = aes(x = fate, y = percent,
+                                          fill = sex))
+p + geom_bar(position = &quot;dodge&quot;, stat = &quot;identity&quot;) + theme(legend.position = &quot;top&quot;)</code></pre>
+<p><img src="/post/2019-09-26-Data-Visualization-Chapter-2-4_files/figure-html/unnamed-chunk-34-1.png" width="768" /></p>
+<pre class="r"><code>p &lt;- ggplot(data = oecd_sum,
+            mapping = aes(x = year, y = diff, fill = hi_lo))
+p + geom_col() + guides(fill = FALSE) + 
+  labs(x = NULL, y = &quot;Difference in Years&quot;,
+       title = &quot;The US Life Expectancy Gap&quot;,
+       subtitle = &quot;Difference between US and OECD 
+       average life expectancies, 1960-2015&quot;,
+       caption = &quot;Data: OECD. After a chart by Christopher Ingraham,
+       Washington Post, December 27th 2017.&quot;)</code></pre>
+<pre><code>## Warning: Removed 1 rows containing missing values (position_stack).</code></pre>
+<p><img src="/post/2019-09-26-Data-Visualization-Chapter-2-4_files/figure-html/unnamed-chunk-35-1.png" width="768" /></p>
+</div>
+</div>

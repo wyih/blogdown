@@ -1,0 +1,376 @@
+---
+title: Data Visualization Chapter 5
+author: wyih
+date: '2019-09-26'
+categories:
+  - R
+  - Books
+tags:
+  - socviz
+slug: data-visualization-chapter-5
+lastmod: '2019-09-26T00:25:35+08:00'
+featured: no
+output:
+  blogdown::html_page:
+    toc: yes
+image:
+  caption: ''
+  focal_point: ''
+  preview_only: no
+---
+
+
+<div id="TOC">
+<ul>
+<li><a href="#chapter-5">Chapter 5</a><ul>
+<li><a href="#use-pipes-to-summerize-data">Use Pipes to Summerize Data</a></li>
+</ul></li>
+<li><a href="#continuous-variables-by-group-or-category">Continuous Variables by Group or Category</a><ul>
+<li><a href="#write-and-draw-in-the-plot-area">Write and Draw in the Plot Area</a></li>
+<li><a href="#scales-guides-and-themes">Scales, Guides, and Themes</a></li>
+</ul></li>
+</ul>
+</div>
+
+<div id="chapter-5" class="section level2">
+<h2>Chapter 5</h2>
+<div id="use-pipes-to-summerize-data" class="section level3">
+<h3>Use Pipes to Summerize Data</h3>
+<pre class="r"><code>rel_by_region &lt;- gss_sm %&gt;%
+  group_by(bigregion, religion) %&gt;%
+  summarize(N = n()) %&gt;%
+  mutate(freq = N / sum(N),
+         pct = round((freq*100), 0))</code></pre>
+<pre><code>## Warning: Factor `religion` contains implicit NA, consider using
+## `forcats::fct_explicit_na`</code></pre>
+<pre class="r"><code>rel_by_region</code></pre>
+<pre><code>## # A tibble: 24 x 5
+## # Groups:   bigregion [4]
+##    bigregion religion       N    freq   pct
+##    &lt;fct&gt;     &lt;fct&gt;      &lt;int&gt;   &lt;dbl&gt; &lt;dbl&gt;
+##  1 Northeast Protestant   158 0.324      32
+##  2 Northeast Catholic     162 0.332      33
+##  3 Northeast Jewish        27 0.0553      6
+##  4 Northeast None         112 0.230      23
+##  5 Northeast Other         28 0.0574      6
+##  6 Northeast &lt;NA&gt;           1 0.00205     0
+##  7 Midwest   Protestant   325 0.468      47
+##  8 Midwest   Catholic     172 0.247      25
+##  9 Midwest   Jewish         3 0.00432     0
+## 10 Midwest   None         157 0.226      23
+## # … with 14 more rows</code></pre>
+<pre class="r"><code>rel_by_region %&gt;% group_by(bigregion) %&gt;% summarize(total = sum(pct))</code></pre>
+<pre><code>## # A tibble: 4 x 2
+##   bigregion total
+##   &lt;fct&gt;     &lt;dbl&gt;
+## 1 Northeast   100
+## 2 Midwest     101
+## 3 South       100
+## 4 West        101</code></pre>
+<pre class="r"><code>p &lt;- ggplot(rel_by_region, aes(x = bigregion, y = pct, fill = religion))
+p + geom_col(position = &quot;dodge2&quot;) +
+  labs(x = &quot;Region&quot;,y = &quot;Percent&quot;, fill = &quot;Religion&quot;) +
+  theme(legend.position = &quot;top&quot;)</code></pre>
+<p><img src="/post/2019-09-26-data-visualization-chapter-5_files/figure-html/unnamed-chunk-3-1.png" width="768" />
+Use <code>coord_flip()</code></p>
+<pre class="r"><code>p &lt;- ggplot(rel_by_region, aes(x = bigregion, y = pct, fill = religion))
+p + geom_col(position = &quot;dodge2&quot;) +
+  labs(x = &quot;Region&quot;,y = &quot;Percent&quot;, fill = &quot;Religion&quot;) +
+  guides(fill = FALSE) + 
+  coord_flip() + 
+  facet_grid(~ bigregion)</code></pre>
+<p><img src="/post/2019-09-26-data-visualization-chapter-5_files/figure-html/unnamed-chunk-4-1.png" width="768" /></p>
+<pre class="r"><code>p &lt;- ggplot(rel_by_region, aes(x = religion, y = pct, fill = religion))
+p + geom_col(position = &quot;dodge2&quot;) +
+  labs(x = NULL,y = &quot;Percent&quot;, fill = &quot;Religion&quot;) +
+  guides(fill = FALSE) + 
+  coord_flip() + 
+  facet_grid(~ bigregion)</code></pre>
+<p><img src="/post/2019-09-26-data-visualization-chapter-5_files/figure-html/unnamed-chunk-5-1.png" width="768" /></p>
+</div>
+</div>
+<div id="continuous-variables-by-group-or-category" class="section level2">
+<h2>Continuous Variables by Group or Category</h2>
+<pre class="r"><code>p &lt;- ggplot(data = organdata, mapping = aes(x = year, y = donors))
+p + geom_line(aes(group = country)) + facet_wrap(~country)</code></pre>
+<pre><code>## Warning: Removed 34 rows containing missing values (geom_path).</code></pre>
+<p><img src="/post/2019-09-26-data-visualization-chapter-5_files/figure-html/unnamed-chunk-6-1.png" width="768" /></p>
+<pre class="r"><code>p &lt;- ggplot(data = organdata, mapping = aes(x = country, y = donors))
+p + geom_boxplot() + coord_flip()</code></pre>
+<pre><code>## Warning: Removed 34 rows containing non-finite values (stat_boxplot).</code></pre>
+<p><img src="/post/2019-09-26-data-visualization-chapter-5_files/figure-html/unnamed-chunk-7-1.png" width="768" /></p>
+<pre class="r"><code>p &lt;- ggplot(data = organdata, mapping = aes(x = reorder(country,
+                                                        donors, na.rm = TRUE), y = donors))
+p + geom_boxplot() + labs(x = NULL) + coord_flip()</code></pre>
+<pre><code>## Warning: Removed 34 rows containing non-finite values (stat_boxplot).</code></pre>
+<p><img src="/post/2019-09-26-data-visualization-chapter-5_files/figure-html/unnamed-chunk-8-1.png" width="768" /></p>
+<pre class="r"><code>p &lt;- ggplot(data = organdata, mapping = aes(x = reorder(country, donors, na.rm = TRUE), 
+                                            y = donors, fill = world))
+p + geom_boxplot() + labs(x = NULL) + 
+  coord_flip() + theme(legend.position = &quot;top&quot;)</code></pre>
+<pre><code>## Warning: Removed 34 rows containing non-finite values (stat_boxplot).</code></pre>
+<p><img src="/post/2019-09-26-data-visualization-chapter-5_files/figure-html/unnamed-chunk-9-1.png" width="768" /></p>
+<pre class="r"><code>p &lt;- ggplot(data = organdata, mapping = aes(x = reorder(country, donors, na.rm = TRUE), 
+                                            y = donors, color = world))
+p + geom_point() + labs(x = NULL) + 
+  coord_flip() + theme(legend.position = &quot;top&quot;)</code></pre>
+<pre><code>## Warning: Removed 34 rows containing missing values (geom_point).</code></pre>
+<p><img src="/post/2019-09-26-data-visualization-chapter-5_files/figure-html/unnamed-chunk-10-1.png" width="768" /></p>
+<pre class="r"><code>p &lt;-
+  ggplot(data = organdata,
+         mapping = aes(
+           x = reorder(country, donors, na.rm = TRUE),
+           y = donors,
+           color = world
+         ))
+p + geom_jitter() + labs(x = NULL) +
+  coord_flip() + theme(legend.position = &quot;top&quot;)</code></pre>
+<pre><code>## Warning: Removed 34 rows containing missing values (geom_point).</code></pre>
+<p><img src="/post/2019-09-26-data-visualization-chapter-5_files/figure-html/unnamed-chunk-11-1.png" width="768" /></p>
+<pre class="r"><code>p &lt;-
+  ggplot(data = organdata,
+         mapping = aes(
+           x = reorder(country, donors, na.rm = TRUE),
+           y = donors,
+           color = world
+         ))
+p + geom_jitter(position = position_jitter(width = 0.15)) + labs(x = NULL) +
+  coord_flip() + theme(legend.position = &quot;top&quot;)</code></pre>
+<pre><code>## Warning: Removed 34 rows containing missing values (geom_point).</code></pre>
+<p><img src="/post/2019-09-26-data-visualization-chapter-5_files/figure-html/unnamed-chunk-12-1.png" width="768" /></p>
+<pre class="r"><code>by_country &lt;-
+  organdata %&gt;% group_by(consent_law, country) %&gt;% summarize(
+    donors_mean = mean(donors, na.rm = TRUE),
+    donors_sd = sd(donors, na.rm = TRUE),
+    gdp_mean = mean(gdp, na.rm = TRUE),
+    health_mean = mean(health, na.rm = TRUE),
+    roads_mean = mean(roads, na.rm = TRUE),
+    cerebvas_mean = mean(cerebvas, na.rm = TRUE)
+  )</code></pre>
+<pre class="r"><code>by_country</code></pre>
+<pre><code>## # A tibble: 17 x 8
+## # Groups:   consent_law [2]
+##    consent_law country donors_mean donors_sd gdp_mean health_mean
+##    &lt;chr&gt;       &lt;chr&gt;         &lt;dbl&gt;     &lt;dbl&gt;    &lt;dbl&gt;       &lt;dbl&gt;
+##  1 Informed    Austra…        10.6     1.14    22179.       1958.
+##  2 Informed    Canada         14.0     0.751   23711.       2272.
+##  3 Informed    Denmark        13.1     1.47    23722.       2054.
+##  4 Informed    Germany        13.0     0.611   22163.       2349.
+##  5 Informed    Ireland        19.8     2.48    20824.       1480.
+##  6 Informed    Nether…        13.7     1.55    23013.       1993.
+##  7 Informed    United…        13.5     0.775   21359.       1561.
+##  8 Informed    United…        20.0     1.33    29212.       3988.
+##  9 Presumed    Austria        23.5     2.42    23876.       1875.
+## 10 Presumed    Belgium        21.9     1.94    22500.       1958.
+## 11 Presumed    Finland        18.4     1.53    21019.       1615.
+## 12 Presumed    France         16.8     1.60    22603.       2160.
+## 13 Presumed    Italy          11.1     4.28    21554.       1757 
+## 14 Presumed    Norway         15.4     1.11    26448.       2217.
+## 15 Presumed    Spain          28.1     4.96    16933        1289.
+## 16 Presumed    Sweden         13.1     1.75    22415.       1951.
+## 17 Presumed    Switze…        14.2     1.71    27233        2776.
+## # … with 2 more variables: roads_mean &lt;dbl&gt;, cerebvas_mean &lt;dbl&gt;</code></pre>
+<pre class="r"><code>by_country &lt;- organdata %&gt;% group_by(consent_law, country) %&gt;%
+  summarize_if(is.numeric, lst(mean, sd), na.rm = TRUE) %&gt;%
+  ungroup()
+by_country</code></pre>
+<pre><code>## # A tibble: 17 x 28
+##    consent_law country donors_mean pop_mean pop_dens_mean gdp_mean
+##    &lt;chr&gt;       &lt;chr&gt;         &lt;dbl&gt;    &lt;dbl&gt;         &lt;dbl&gt;    &lt;dbl&gt;
+##  1 Informed    Austra…        10.6   18318.         0.237   22179.
+##  2 Informed    Canada         14.0   29608.         0.297   23711.
+##  3 Informed    Denmark        13.1    5257.        12.2     23722.
+##  4 Informed    Germany        13.0   80255.        22.5     22163.
+##  5 Informed    Ireland        19.8    3674.         5.23    20824.
+##  6 Informed    Nether…        13.7   15548.        37.4     23013.
+##  7 Informed    United…        13.5   58187.        24.0     21359.
+##  8 Informed    United…        20.0  269330.         2.80    29212.
+##  9 Presumed    Austria        23.5    7927.         9.45    23876.
+## 10 Presumed    Belgium        21.9   10153.        30.7     22500.
+## 11 Presumed    Finland        18.4    5112.         1.51    21019.
+## 12 Presumed    France         16.8   58056.        10.5     22603.
+## 13 Presumed    Italy          11.1   57360.        19.0     21554.
+## 14 Presumed    Norway         15.4    4386.         1.35    26448.
+## 15 Presumed    Spain          28.1   39666.         7.84    16933 
+## 16 Presumed    Sweden         13.1    8789.         1.95    22415.
+## 17 Presumed    Switze…        14.2    7037.        17.0     27233 
+## # … with 22 more variables: gdp_lag_mean &lt;dbl&gt;, health_mean &lt;dbl&gt;,
+## #   health_lag_mean &lt;dbl&gt;, pubhealth_mean &lt;dbl&gt;, roads_mean &lt;dbl&gt;,
+## #   cerebvas_mean &lt;dbl&gt;, assault_mean &lt;dbl&gt;, external_mean &lt;dbl&gt;,
+## #   txp_pop_mean &lt;dbl&gt;, donors_sd &lt;dbl&gt;, pop_sd &lt;dbl&gt;, pop_dens_sd &lt;dbl&gt;,
+## #   gdp_sd &lt;dbl&gt;, gdp_lag_sd &lt;dbl&gt;, health_sd &lt;dbl&gt;, health_lag_sd &lt;dbl&gt;,
+## #   pubhealth_sd &lt;dbl&gt;, roads_sd &lt;dbl&gt;, cerebvas_sd &lt;dbl&gt;,
+## #   assault_sd &lt;dbl&gt;, external_sd &lt;dbl&gt;, txp_pop_sd &lt;dbl&gt;</code></pre>
+<pre class="r"><code>p &lt;- ggplot(data = by_country,
+            mapping = aes(
+              x = donors_mean,
+              y = reorder(country, donors_mean),
+              color = consent_law
+            ))
+p + geom_point(size = 3) +
+  labs(x = &quot;Donor Procurement Rate&quot;,
+       y = &quot;&quot;, color = &quot;Consent Law&quot;) +
+  theme(legend.position = &quot;top&quot;)</code></pre>
+<p><img src="/post/2019-09-26-data-visualization-chapter-5_files/figure-html/unnamed-chunk-16-1.png" width="768" /></p>
+<pre class="r"><code>p &lt;- ggplot(data = by_country,
+            mapping = aes(x = donors_mean,
+                          y = reorder(country, donors_mean)))
+
+p + geom_point(size = 3) +
+  facet_wrap( ~ consent_law, scales = &quot;free_y&quot;, ncol = 1) +
+  labs(x = &quot;Donor Procurement Rate&quot;,
+       y = &quot;&quot;)</code></pre>
+<p><img src="/post/2019-09-26-data-visualization-chapter-5_files/figure-html/unnamed-chunk-17-1.png" width="768" /></p>
+<pre class="r"><code>p &lt;- ggplot(data = by_country,
+            mapping = aes(x = reorder(country,
+                                      donors_mean), y = donors_mean))
+
+p + geom_pointrange(mapping = aes(ymin = donors_mean - donors_sd,
+                                  ymax = donors_mean + donors_sd)) +
+  labs(x = &quot;&quot;, y = &quot;Donor Procurement Rate&quot;) + coord_flip()</code></pre>
+<p><img src="/post/2019-09-26-data-visualization-chapter-5_files/figure-html/unnamed-chunk-18-1.png" width="768" />
+### Plot Text Directly</p>
+<pre class="r"><code>p &lt;- ggplot(data = by_country,
+            mapping = aes(x = roads_mean,
+                          y = donors_mean))
+p + geom_point() + geom_text(mapping = aes(label = country))</code></pre>
+<p><img src="/post/2019-09-26-data-visualization-chapter-5_files/figure-html/unnamed-chunk-19-1.png" width="768" /></p>
+<pre class="r"><code>p &lt;- ggplot(data = by_country,
+            mapping = aes(x = roads_mean,
+                          y = donors_mean))
+p + geom_point() + geom_text(mapping = aes(label = country), hjust = 0)</code></pre>
+<p><img src="/post/2019-09-26-data-visualization-chapter-5_files/figure-html/unnamed-chunk-20-1.png" width="768" />
+ggrepel is better than <code>geom_text()</code></p>
+<pre class="r"><code>library(ggrepel)</code></pre>
+<pre class="r"><code>p_title &lt;-
+  &quot;Presidential Elections: Popular &amp; Electoral College Margins&quot;
+p_subtitle &lt;- &quot;1824-2016&quot;
+p_caption &lt;- &quot;Data for 2016 are provisional.&quot;
+x_label &lt;- &quot;Winner&#39;s share of Popular Vote&quot;
+y_label &lt;- &quot;Winner&#39;s share of Electoral College Votes&quot;
+
+p &lt;- ggplot(elections_historic,
+            aes(x = popular_pct, y = ec_pct,
+                label = winner_label))
+
+p + geom_hline(yintercept = 0.5,
+               size = 1.4,
+               color = &quot;gray80&quot;) +
+  geom_vline(xintercept = 0.5,
+             size = 1.4,
+             color = &quot;gray80&quot;) +
+  geom_point() +
+  geom_text_repel() +
+  scale_x_continuous(labels = scales::percent) +
+  scale_y_continuous(labels = scales::percent) +
+  labs(
+    x = x_label,
+    y = y_label,
+    title = p_title,
+    subtitle = p_subtitle,
+    caption = p_caption
+  )</code></pre>
+<p><img src="/post/2019-09-26-data-visualization-chapter-5_files/figure-html/unnamed-chunk-22-1.png" width="768" />
+### Label Outliers</p>
+<pre class="r"><code>p &lt;- ggplot(data = by_country,
+            mapping = aes(x = gdp_mean, y = health_mean))
+
+p + geom_point() +
+  geom_text_repel(data = subset(by_country, gdp_mean &gt; 25000),
+                  mapping = aes(label = country))</code></pre>
+<p><img src="/post/2019-09-26-data-visualization-chapter-5_files/figure-html/unnamed-chunk-23-1.png" width="768" /></p>
+<pre class="r"><code>p &lt;- ggplot(data = by_country,
+            mapping = aes(x = gdp_mean, y = health_mean))
+
+p + geom_point() +
+  geom_text_repel(
+    data = subset(
+      by_country,
+      gdp_mean &gt; 25000 | health_mean &lt; 1500 |
+        country %in% &quot;Belgium&quot;
+    ),
+    mapping = aes(label = country)
+  )</code></pre>
+<p><img src="/post/2019-09-26-data-visualization-chapter-5_files/figure-html/unnamed-chunk-23-2.png" width="768" /></p>
+<pre class="r"><code>organdata$ind &lt;- organdata$ccode %in% c(&quot;Ita&quot;, &quot;Spa&quot;) &amp;
+  organdata$year &gt; 1998
+
+p &lt;- ggplot(data = organdata,
+            mapping = aes(x = roads,
+                          y = donors, color = ind))
+p + geom_point() +
+  geom_text_repel(data = subset(organdata, ind),
+                  mapping = aes(label = ccode)) +
+  guides(label = FALSE, color = FALSE)</code></pre>
+<pre><code>## Warning: Removed 34 rows containing missing values (geom_point).</code></pre>
+<p><img src="/post/2019-09-26-data-visualization-chapter-5_files/figure-html/unnamed-chunk-24-1.png" width="768" /></p>
+<div id="write-and-draw-in-the-plot-area" class="section level3">
+<h3>Write and Draw in the Plot Area</h3>
+<pre class="r"><code>p &lt;- ggplot(data = organdata, mapping = aes(x = roads, y = donors))
+p + geom_point() + annotate(
+  geom = &quot;text&quot;,
+  x = 91,
+  y = 33,
+  label = &quot;A surprisingly high \n recovery rate.&quot;,
+  hjust = 0
+)</code></pre>
+<pre><code>## Warning: Removed 34 rows containing missing values (geom_point).</code></pre>
+<p><img src="/post/2019-09-26-data-visualization-chapter-5_files/figure-html/unnamed-chunk-25-1.png" width="768" /></p>
+<pre class="r"><code>p &lt;- ggplot(data = organdata,
+            mapping = aes(x = roads, y = donors))
+p + geom_point() +
+  annotate(
+    geom = &quot;rect&quot;,
+    xmin = 125,
+    xmax = 155,
+    ymin = 30,
+    ymax = 35,
+    fill = &quot;red&quot;,
+    alpha = 0.2
+  ) +
+  annotate(
+    geom = &quot;text&quot;,
+    x = 157,
+    y = 33,
+    label = &quot;A surprisingly high \n recovery rate.&quot;,
+    hjust = 0
+  )</code></pre>
+<pre><code>## Warning: Removed 34 rows containing missing values (geom_point).</code></pre>
+<p><img src="/post/2019-09-26-data-visualization-chapter-5_files/figure-html/unnamed-chunk-26-1.png" width="768" /></p>
+</div>
+<div id="scales-guides-and-themes" class="section level3">
+<h3>Scales, Guides, and Themes</h3>
+<pre class="r"><code>p &lt;- ggplot(data = organdata,
+            mapping = aes(x = roads,
+                          y = donors,
+                          color = world))
+p + geom_point()</code></pre>
+<pre><code>## Warning: Removed 34 rows containing missing values (geom_point).</code></pre>
+<p><img src="/post/2019-09-26-data-visualization-chapter-5_files/figure-html/unnamed-chunk-27-1.png" width="768" /></p>
+<pre class="r"><code>p &lt;- ggplot(data = organdata,
+            mapping = aes(x = roads,
+                          y = donors,
+                          color = world))
+p + geom_point() + scale_x_log10() + scale_y_continuous(breaks = c(5,
+                                                                   15, 25),
+                                                        labels = c(&quot;Five&quot;, &quot;Fifteen&quot;, &quot;Twenty Five&quot;))</code></pre>
+<pre><code>## Warning: Removed 34 rows containing missing values (geom_point).</code></pre>
+<p><img src="/post/2019-09-26-data-visualization-chapter-5_files/figure-html/unnamed-chunk-28-1.png" width="768" /></p>
+<pre class="r"><code>p &lt;- ggplot(data = organdata,
+            mapping = aes(x = roads, y = donors,
+                          color = world))
+p + geom_point() + scale_color_discrete(labels = c(&quot;Corporatist&quot;,
+                                                   &quot;Liberal&quot;, &quot;Social Democratic&quot;, &quot;Unclassified&quot;)) + 
+  labs(x = &quot;Road Deaths&quot;,
+       y = &quot;Donor Procurement&quot;, color = &quot;Welfare State&quot;)</code></pre>
+<pre><code>## Warning: Removed 34 rows containing missing values (geom_point).</code></pre>
+<p><img src="/post/2019-09-26-data-visualization-chapter-5_files/figure-html/unnamed-chunk-29-1.png" width="768" /></p>
+<pre class="r"><code>p &lt;- ggplot(data = organdata,
+            mapping = aes(x = roads, y = donors,
+                          color = world))
+p + geom_point() + labs(x = &quot;Road Deaths&quot;, y = &quot;Donor Procurement&quot;) +
+  guides(color = FALSE)</code></pre>
+<pre><code>## Warning: Removed 34 rows containing missing values (geom_point).</code></pre>
+<p><img src="/post/2019-09-26-data-visualization-chapter-5_files/figure-html/unnamed-chunk-30-1.png" width="768" /></p>
+</div>
+</div>
