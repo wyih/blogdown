@@ -8,6 +8,7 @@
 title = "Little World"
 
 publishDir = "wyih.github.io"
+
 # The URL of your site.
 # End your URL with a `/` trailing slash, e.g. `https://example.com/`.
 baseurl = "/"
