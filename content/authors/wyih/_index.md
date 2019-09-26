@@ -1,7 +1,7 @@
 ---
 authors:
 - Yihong Wang
-bio: Nothing
+bio: Wayfaring Stranger
 email: "neofacenew@gmail.com"
 name: Yihong WANG
 organizations:

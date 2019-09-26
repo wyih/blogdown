@@ -1,7 +1,7 @@
 ---
 authors:
 - admin
-bio: Nothing
+bio: Wayfaring Stranger
 education:
   courses:
   - course: PhD in Artificial Intelligence
