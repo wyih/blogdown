@@ -1,0 +1,459 @@
+---
+title: Data Vis Chapter 6
+author: wyih
+date: '2019-09-26'
+slug: data-vis-chapter-6
+categories:
+  - R
+tags:
+  - socviz
+subtitle: ''
+summary: ''
+authors: []
+lastmod: '2019-09-26T16:21:48+08:00'
+featured: no
+output:
+  blogdown::html_page:
+    toc: yes
+image:
+  caption: ''
+  focal_point: ''
+  preview_only: no
+projects: []
+---
+
+
+<div id="TOC">
+<ul>
+<li><a href="#show-several-fits-at-once-with-a-legend">Show Several Fits at Once, with a Legend</a></li>
+<li><a href="#model-based-graphics">Model-based Graphics</a></li>
+<li><a href="#tidy-model-objects-with-broom">Tidy Model Objects with Broom</a><ul>
+<li><a href="#get-component-level-statistics-with-tidy">get component-level statistics with tidy()</a></li>
+<li><a href="#get-observation-level-statistics-with-augment">Get observation-level statistics with augment()</a></li>
+</ul></li>
+<li><a href="#grouped-analysis">Grouped Analysis</a></li>
+<li><a href="#plots-for-surveys">Plots for Surveys</a></li>
+</ul>
+</div>
+
+<pre class="r"><code>p &lt;-  ggplot(data = gapminder,
+             mapping = aes(x = log(gdpPercap), y = lifeExp))
+
+p + geom_point(alpha = 0.1) +
+  geom_smooth(color = &quot;tomato&quot;,
+              fill = &quot;tomato&quot;,
+              method = MASS::rlm) + #robust regression line
+  geom_smooth(color = &quot;steelblue&quot;,
+              fill = &quot;steelblue&quot;,
+              method = &quot;lm&quot;)</code></pre>
+<p><img src="/post/2019-09-26-data-vis-chapter-6_files/figure-html/unnamed-chunk-1-1.png" width="672" /></p>
+<pre class="r"><code>p + geom_point(alpha = 0.1) +
+  geom_smooth(
+    color = &quot;tomato&quot;,
+    method = &quot;lm&quot;,
+    size = 1.2,
+    formula = y ~ splines::bs(x, 3),
+    se = FALSE
+  )</code></pre>
+<p><img src="/post/2019-09-26-data-vis-chapter-6_files/figure-html/unnamed-chunk-1-2.png" width="672" /></p>
+<pre class="r"><code>p + geom_point(alpha = 0.1) +
+  geom_quantile( # specialized version of geom)smooth that can fit quantile regression
+    color = &quot;tomato&quot;,
+    size = 1.2,
+    method = &quot;rqss&quot;,
+    lambda = 1,
+    quantiles = c(0.20, 0.5, 0.85)
+  )</code></pre>
+<pre><code>## Smoothing formula not specified. Using: y ~ qss(x, lambda = 1)</code></pre>
+<p><img src="/post/2019-09-26-data-vis-chapter-6_files/figure-html/unnamed-chunk-1-3.png" width="672" /></p>
+<div id="show-several-fits-at-once-with-a-legend" class="section level2">
+<h2>Show Several Fits at Once, with a Legend</h2>
+<pre class="r"><code>model_colors &lt;- RColorBrewer::brewer.pal(3, &quot;Set1&quot;)
+model_colors</code></pre>
+<pre><code>## [1] &quot;#E41A1C&quot; &quot;#377EB8&quot; &quot;#4DAF4A&quot;</code></pre>
+<pre class="r"><code>p0 &lt;- ggplot(data = gapminder,
+             mapping = aes(x = log(gdpPercap), y = lifeExp))
+
+p1 &lt;- p0 + geom_point(alpha = 0.2) +
+  geom_smooth(method = &quot;lm&quot;, aes(color = &quot;OLS&quot;, fill = &quot;OLS&quot;)) +
+  geom_smooth(
+    method = &quot;lm&quot;,
+    formula = y ~ splines::bs(x, df = 3),
+    aes(color = &quot;Cubic Spline&quot;, fill = &quot;Cubic Spline&quot;)
+  ) +
+  geom_smooth(method = &quot;loess&quot;,
+              aes(color = &quot;LOESS&quot;, fill = &quot;LOESS&quot;))
+
+p1 + scale_color_manual(name = &quot;Models&quot;, values = model_colors) +
+  scale_fill_manual(name = &quot;Models&quot;, values = model_colors) +
+  theme(legend.position = &quot;top&quot;)</code></pre>
+<p><img src="/post/2019-09-26-data-vis-chapter-6_files/figure-html/unnamed-chunk-2-1.png" width="672" /></p>
+</div>
+<div id="model-based-graphics" class="section level2">
+<h2>Model-based Graphics</h2>
+<pre class="r"><code>min_gdp &lt;- min(gapminder$gdpPercap)
+max_gdp &lt;- max(gapminder$gdpPercap)
+med_pop &lt;- median(gapminder$pop)
+
+pred_df &lt;- expand.grid(gdpPercap = (seq(from = min_gdp, to = max_gdp,
+length.out = 100)), pop = med_pop, continent = c(&quot;Africa&quot;,
+&quot;Americas&quot;, &quot;Asia&quot;, &quot;Europe&quot;, &quot;Oceania&quot;))
+
+dim(pred_df)</code></pre>
+<pre><code>## [1] 500   3</code></pre>
+<pre class="r"><code>out &lt;- lm(formula = lifeExp ~ gdpPercap + pop + continent, data = gapminder)
+
+pred_out &lt;- predict(object = out, newdata = pred_df, interval = &quot;predict&quot;)
+pred_df &lt;- cbind(pred_df, pred_out)</code></pre>
+<pre class="r"><code>p &lt;-
+  ggplot(
+    data = subset(pred_df, continent %in% c(&quot;Europe&quot;, &quot;Africa&quot;)),
+    aes(
+      x = gdpPercap,
+      y = fit,
+      ymin = lwr,
+      ymax = upr,
+      color = continent,
+      fill = continent,
+      group = continent
+    )
+  )
+
+p + geom_point(
+  data = subset(gapminder,
+                continent %in% c(&quot;Europe&quot;, &quot;Africa&quot;)),
+  aes(x = gdpPercap, y = lifeExp,
+      color = continent),
+  alpha = 0.5,
+  inherit.aes = FALSE
+) +
+  geom_line() +
+  geom_ribbon(alpha = 0.2, color = FALSE) +
+  scale_x_log10(labels = scales::dollar)</code></pre>
+<p><img src="/post/2019-09-26-data-vis-chapter-6_files/figure-html/unnamed-chunk-4-1.png" width="672" /></p>
+</div>
+<div id="tidy-model-objects-with-broom" class="section level2">
+<h2>Tidy Model Objects with Broom</h2>
+<div id="get-component-level-statistics-with-tidy" class="section level3">
+<h3>get component-level statistics with tidy()</h3>
+<pre class="r"><code>library(broom)
+out_comp &lt;- tidy(out)
+out_comp %&gt;% round_df()</code></pre>
+<pre><code>## # A tibble: 7 x 5
+##   term              estimate std.error statistic p.value
+##   &lt;chr&gt;                &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt;   &lt;dbl&gt;
+## 1 (Intercept)          47.8      0.34     141.         0
+## 2 gdpPercap             0        0         19.2        0
+## 3 pop                   0        0          3.33       0
+## 4 continentAmericas    13.5      0.6       22.5        0
+## 5 continentAsia         8.19     0.570     14.3        0
+## 6 continentEurope      17.5      0.62      28.0        0
+## 7 continentOceania     18.1      1.78      10.2        0</code></pre>
+<p>“not in” <code>%nin%</code> is availabe via <code>socviz</code>.
+<code>prefix_strip</code> from <code>socviz</code> drops prefixes</p>
+<pre class="r"><code>#confidence interval
+out_conf &lt;- tidy(out, conf.int = TRUE)
+out_conf &lt;- subset(out_conf, term %nin% &quot;(Intercept)&quot;)
+out_conf$nicelabs &lt;- prefix_strip(out_conf$term, &quot;continent&quot;)</code></pre>
+<pre class="r"><code>p &lt;- ggplot(out_conf,
+            mapping = aes(
+              x = reorder(nicelabs, estimate),
+              y = estimate,
+              ymin = conf.low,
+              ymax = conf.high
+            ))
+p + geom_pointrange() + coord_flip() + labs(x = &quot;&quot;, y = &quot;OLS Estimate&quot;)</code></pre>
+<p><img src="/post/2019-09-26-data-vis-chapter-6_files/figure-html/unnamed-chunk-7-1.png" width="672" /></p>
+</div>
+<div id="get-observation-level-statistics-with-augment" class="section level3">
+<h3>Get observation-level statistics with augment()</h3>
+<pre class="r"><code>out_aug &lt;- augment(out)
+p &lt;- ggplot(data = out_aug, mapping = aes(x = .fitted, y = .resid))
+p + geom_point()</code></pre>
+<p><img src="/post/2019-09-26-data-vis-chapter-6_files/figure-html/unnamed-chunk-8-1.png" width="672" />
+### Get model-level statistics with glance()
+Broom is able to <code>tidy</code> (and <code>augment</code>, and <code>glance</code> at) a wide range of model types.</p>
+<pre class="r"><code>library(survival)
+
+out_cph &lt;- coxph(Surv(time, status) ~ age + sex, data = lung)
+out_surv &lt;- survfit(out_cph)
+out_tidy &lt;- tidy(out_surv)
+p &lt;- ggplot(data = out_tidy, mapping = aes(time, estimate))
+p + geom_line() + geom_ribbon(mapping = aes(ymin = conf.low,
+                                            ymax = conf.high),
+                              alpha = 0.2)</code></pre>
+<p><img src="/post/2019-09-26-data-vis-chapter-6_files/figure-html/unnamed-chunk-9-1.png" width="672" /></p>
+</div>
+</div>
+<div id="grouped-analysis" class="section level2">
+<h2>Grouped Analysis</h2>
+<p><code>nest</code> and <code>unnest</code></p>
+<pre class="r"><code>out_le &lt;- gapminder %&gt;%
+  group_by(continent, year) %&gt;%
+  nest()</code></pre>
+<pre class="r"><code>fit_ols &lt;- function(df) {
+  lm(lifeExp ~ log(gdpPercap), data = df)
+}
+
+out_le &lt;- gapminder %&gt;%
+  group_by(continent, year) %&gt;%
+  nest() %&gt;%
+  mutate(model = map(data, fit_ols))
+
+
+
+out_tidy &lt;- gapminder %&gt;%
+  group_by(continent, year) %&gt;%
+  nest() %&gt;%
+  mutate(model = map(data, fit_ols),
+         tidied = map(model, tidy)) %&gt;%
+  unnest(tidied, .drop = TRUE) %&gt;%
+  filter(term %nin% &quot;(Intercept)&quot; &amp;
+           continent %nin% &quot;Oceania&quot;)
+
+p &lt;- ggplot(
+  data = out_tidy,
+  mapping = aes(
+    x = year,
+    y = estimate,
+    ymin = estimate - 2 * std.error,
+    ymax = estimate + 2 * std.error,
+    group = continent,
+    color = continent
+  )
+)
+
+p + geom_pointrange(position = position_dodge(width = 1)) +
+  scale_x_continuous(breaks = unique(gapminder$year)) +
+  theme(legend.position = &quot;top&quot;) +
+  labs(x = &quot;Year&quot;, y = &quot;Estimate&quot;, color = &quot;Continent&quot;)</code></pre>
+<p><img src="/post/2019-09-26-data-vis-chapter-6_files/figure-html/unnamed-chunk-11-1.png" width="672" />
+## Plot Marginal Effects</p>
+<pre class="r"><code>library(margins)
+gss_sm$polviews_m &lt;- relevel(gss_sm$polviews, ref = &quot;Moderate&quot;)
+out_bo &lt;- glm(obama ~ polviews_m + sex * race,
+              family = &quot;binomial&quot;,
+              data = gss_sm)
+summary(out_bo)</code></pre>
+<pre><code>## 
+## Call:
+## glm(formula = obama ~ polviews_m + sex * race, family = &quot;binomial&quot;, 
+##     data = gss_sm)
+## 
+## Deviance Residuals: 
+##     Min       1Q   Median       3Q      Max  
+## -2.9045  -0.5541   0.1772   0.5418   2.2437  
+## 
+## Coefficients:
+##                                   Estimate Std. Error z value Pr(&gt;|z|)    
+## (Intercept)                       0.296493   0.134091   2.211  0.02703 *  
+## polviews_mExtremely Liberal       2.372950   0.525045   4.520 6.20e-06 ***
+## polviews_mLiberal                 2.600031   0.356666   7.290 3.10e-13 ***
+## polviews_mSlightly Liberal        1.293172   0.248435   5.205 1.94e-07 ***
+## polviews_mSlightly Conservative  -1.355277   0.181291  -7.476 7.68e-14 ***
+## polviews_mConservative           -2.347463   0.200384 -11.715  &lt; 2e-16 ***
+## polviews_mExtremely Conservative -2.727384   0.387210  -7.044 1.87e-12 ***
+## sexFemale                         0.254866   0.145370   1.753  0.07956 .  
+## raceBlack                         3.849526   0.501319   7.679 1.61e-14 ***
+## raceOther                        -0.002143   0.435763  -0.005  0.99608    
+## sexFemale:raceBlack              -0.197506   0.660066  -0.299  0.76477    
+## sexFemale:raceOther               1.574829   0.587657   2.680  0.00737 ** 
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## (Dispersion parameter for binomial family taken to be 1)
+## 
+##     Null deviance: 2247.9  on 1697  degrees of freedom
+## Residual deviance: 1345.9  on 1686  degrees of freedom
+##   (1169 observations deleted due to missingness)
+## AIC: 1369.9
+## 
+## Number of Fisher Scoring iterations: 6</code></pre>
+<pre class="r"><code>bo_m &lt;- margins(out_bo)
+summary(bo_m)</code></pre>
+<pre><code>##                            factor     AME     SE        z      p   lower
+##            polviews_mConservative -0.4119 0.0283 -14.5394 0.0000 -0.4674
+##  polviews_mExtremely Conservative -0.4538 0.0420 -10.7971 0.0000 -0.5361
+##       polviews_mExtremely Liberal  0.2681 0.0295   9.0996 0.0000  0.2103
+##                 polviews_mLiberal  0.2768 0.0229  12.0736 0.0000  0.2319
+##   polviews_mSlightly Conservative -0.2658 0.0330  -8.0596 0.0000 -0.3304
+##        polviews_mSlightly Liberal  0.1933 0.0303   6.3896 0.0000  0.1340
+##                         raceBlack  0.4032 0.0173  23.3568 0.0000  0.3694
+##                         raceOther  0.1247 0.0386   3.2297 0.0012  0.0490
+##                         sexFemale  0.0443 0.0177   2.5073 0.0122  0.0097
+##    upper
+##  -0.3564
+##  -0.3714
+##   0.3258
+##   0.3218
+##  -0.2011
+##   0.2526
+##   0.4371
+##   0.2005
+##   0.0789</code></pre>
+<p>The margins library comes with several plot methods of its own. If you wish, at this point you can just try <code>plot(bo_m)</code> to see a plot of the average marginal effects, produced with the general look of a Stata graphic. Other plot methods in the margins
+library include <code>cplot()</code>, which visualizes marginal effects conditional on a second variable, and <code>image()</code>, which shows predictions or marginal effects as a filled heatmap or contour plot.</p>
+<pre class="r"><code>bo_gg &lt;- as_tibble(summary(bo_m))
+prefixes &lt;- c(&quot;polviews_m&quot;, &quot;sex&quot;)
+bo_gg$factor &lt;- prefix_strip(bo_gg$factor, prefixes)
+bo_gg$factor &lt;- prefix_replace(bo_gg$factor, &quot;race&quot;, &quot;Race: &quot;)
+
+bo_gg %&gt;% select(factor, AME, lower, upper)</code></pre>
+<pre><code>## # A tibble: 9 x 4
+##   factor                     AME    lower   upper
+##   &lt;chr&gt;                    &lt;dbl&gt;    &lt;dbl&gt;   &lt;dbl&gt;
+## 1 Conservative           -0.412  -0.467   -0.356 
+## 2 Extremely Conservative -0.454  -0.536   -0.371 
+## 3 Extremely Liberal       0.268   0.210    0.326 
+## 4 Liberal                 0.277   0.232    0.322 
+## 5 Slightly Conservative  -0.266  -0.330   -0.201 
+## 6 Slightly Liberal        0.193   0.134    0.253 
+## 7 Race: Black             0.403   0.369    0.437 
+## 8 Race: Other             0.125   0.0490   0.200 
+## 9 Female                  0.0443  0.00967  0.0789</code></pre>
+<pre class="r"><code>p &lt;- ggplot(data = bo_gg, aes(
+  x = reorder(factor, AME),
+  y = AME,
+  ymin = lower,
+  ymax = upper
+))
+
+p + geom_hline(yintercept = 0, color = &quot;gray80&quot;) +
+  geom_pointrange() + coord_flip() +
+  labs(x = NULL, y = &quot;Average Marginal Effect&quot;)</code></pre>
+<p><img src="/post/2019-09-26-data-vis-chapter-6_files/figure-html/unnamed-chunk-13-1.png" width="672" /></p>
+<pre class="r"><code>pv_cp &lt;- cplot(out_bo, x = &quot;sex&quot;, draw = FALSE)</code></pre>
+<pre><code>##    xvals     yvals     upper     lower
+## 1   Male 0.5735849 0.6378653 0.5093045
+## 2 Female 0.6344507 0.6887845 0.5801169</code></pre>
+<pre class="r"><code>p &lt;- ggplot(data = pv_cp, aes(
+  x = reorder(xvals, yvals),
+  y = yvals,
+  ymin = lower,
+  ymax = upper
+))
+
+p + geom_hline(yintercept = 0, color = &quot;gray80&quot;) +
+  geom_pointrange() + coord_flip() +
+  labs(x = NULL, y = &quot;Conditional Effect&quot;)</code></pre>
+<p><img src="/post/2019-09-26-data-vis-chapter-6_files/figure-html/unnamed-chunk-14-1.png" width="672" /></p>
+</div>
+<div id="plots-for-surveys" class="section level2">
+<h2>Plots for Surveys</h2>
+<pre class="r"><code>library(survey)</code></pre>
+<pre><code>## Loading required package: grid</code></pre>
+<pre><code>## Loading required package: Matrix</code></pre>
+<pre><code>## 
+## Attaching package: &#39;Matrix&#39;</code></pre>
+<pre><code>## The following object is masked from &#39;package:tidyr&#39;:
+## 
+##     expand</code></pre>
+<pre><code>## 
+## Attaching package: &#39;survey&#39;</code></pre>
+<pre><code>## The following object is masked from &#39;package:graphics&#39;:
+## 
+##     dotchart</code></pre>
+<pre class="r"><code>library(srvyr)</code></pre>
+<pre><code>## 
+## Attaching package: &#39;srvyr&#39;</code></pre>
+<pre><code>## The following object is masked from &#39;package:stats&#39;:
+## 
+##     filter</code></pre>
+<pre class="r"><code>options(survey.lonely.psu = &quot;adjust&quot;)
+options(na.action = &quot;na.pass&quot;)
+
+gss_wt &lt;- subset(gss_lon, year &gt; 1974) %&gt;%
+  mutate(stratvar = interaction(year, vstrat)) %&gt;%
+  as_survey_design(
+    ids = vpsu,
+    strata = stratvar,
+    weights = wtssall,
+    nest = TRUE
+  )
+
+out_grp &lt;- gss_wt %&gt;%
+  filter(year %in% seq(1976, 2016, by = 4)) %&gt;%
+  group_by(year, race, degree) %&gt;%
+  summarize(prop = survey_mean(na.rm = TRUE)) # calculate  properly weighted survey means</code></pre>
+<pre><code>## Warning: Factor `degree` contains implicit NA, consider using
+## `forcats::fct_explicit_na`</code></pre>
+<pre class="r"><code>out_mrg &lt;- gss_wt %&gt;%
+  filter(year %in% seq(1976, 2016, by = 4)) %&gt;%
+  mutate(racedeg = interaction(race, degree)) %&gt;%
+  group_by(year, racedeg) %&gt;%
+  summarize(prop = survey_mean(na.rm = TRUE))</code></pre>
+<pre><code>## Warning: Factor `racedeg` contains implicit NA, consider using
+## `forcats::fct_explicit_na`</code></pre>
+<pre class="r"><code>out_mrg &lt;- gss_wt %&gt;%  filter(year %in% seq(1976, 2016, by = 4)) %&gt;%
+  mutate(racedeg = interaction(race, degree)) %&gt;% group_by(year,
+                                                           racedeg) %&gt;% 
+  summarize(prop = survey_mean(na.rm = TRUE)) %&gt;%
+  separate(racedeg, sep = &quot;\\.&quot;, into = c(&quot;race&quot;, &quot;degree&quot;)) </code></pre>
+<pre><code>## Warning: Factor `racedeg` contains implicit NA, consider using
+## `forcats::fct_explicit_na`</code></pre>
+<pre class="r"><code>p &lt;- ggplot(
+  data = subset(out_grp, race %nin% &quot;Other&quot;),
+  mapping = aes(
+    x = degree,
+    y = prop,
+    ymin = prop - 2 * prop_se,
+    ymax = prop + 2 * prop_se,
+    fill = race,
+    color = race,
+    group = race
+  )
+)
+
+dodge &lt;- position_dodge(width = 0.9)
+
+p + geom_col(position = dodge, alpha = 0.2) +
+  geom_errorbar(position = dodge, width = 0.2) +
+  scale_x_discrete(labels = scales::wrap_format(10)) +
+  scale_y_continuous(labels = scales::percent) +
+  scale_color_brewer(type = &quot;qual&quot;, palette = &quot;Dark2&quot;) +
+  scale_fill_brewer(type = &quot;qual&quot;, palette = &quot;Dark2&quot;) +
+  labs(
+    title = &quot;Educational Attainment by Race&quot;,
+    subtitle = &quot;GSS 1976-2016&quot;,
+    fill = &quot;Race&quot;,
+    color = &quot;Race&quot;,
+    x = NULL,
+    y = &quot;Percent&quot;
+  ) +
+  facet_wrap( ~ year, ncol = 2) +
+  theme(legend.position = &quot;top&quot;)</code></pre>
+<pre><code>## Warning: Removed 13 rows containing missing values (geom_col).</code></pre>
+<pre><code>## Warning: Removed 13 rows containing missing values (geom_errorbar).</code></pre>
+<p><img src="/post/2019-09-26-data-vis-chapter-6_files/figure-html/unnamed-chunk-15-1.png" width="672" /></p>
+<pre class="r"><code>p &lt;- ggplot(
+  data = subset(out_grp, race %nin% &quot;Other&quot;),
+  mapping = aes(
+    x = year,
+    y = prop,
+    ymin = prop - 2 * prop_se,
+    ymax = prop + 2 * prop_se,
+    fill = race,
+    color = race,
+    group = race
+  )
+)
+
+p + geom_ribbon(alpha = 0.3, aes(color = NULL)) + #Use ribbon to show the error range
+  geom_line() + #Use line to show a time trend
+  facet_wrap( ~ degree, ncol = 1) +
+  scale_y_continuous(labels = scales::percent) +
+  scale_color_brewer(type = &quot;qual&quot;, palette = &quot;Dark2&quot;) +
+  scale_fill_brewer(type = &quot;qual&quot;, palette = &quot;Dark2&quot;) +
+  labs(
+    title = &quot;Educational Attainment by Race&quot;,
+    subtitle = &quot;GSS 1976-2016&quot;,
+    fill = &quot;Race&quot;,
+    color = &quot;Race&quot;,
+    x = NULL,
+    y = &quot;Percent&quot;
+  ) +
+  theme(legend.position = &quot;top&quot;)</code></pre>
+<pre><code>## Warning: Removed 13 rows containing missing values (geom_path).</code></pre>
+<p><img src="/post/2019-09-26-data-vis-chapter-6_files/figure-html/unnamed-chunk-16-1.png" width="672" /></p>
+<p>Other useful packages: <code>infer</code>, <code>ggally</code></p>
+</div>
