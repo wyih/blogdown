@@ -209,9 +209,12 @@ out_tidy &lt;- gapminder %&gt;%
          tidied = map(model, tidy)) %&gt;%
   unnest(tidied, .drop = TRUE) %&gt;%
   filter(term %nin% &quot;(Intercept)&quot; &amp;
-           continent %nin% &quot;Oceania&quot;)
-
-p &lt;- ggplot(
+           continent %nin% &quot;Oceania&quot;)</code></pre>
+<pre><code>## Warning: The `.drop` argument of `unnest()` is deprecated as of tidyr 1.0.0.
+## All list-columns are now preserved.
+## This warning is displayed once per session.
+## Call `lifecycle::last_warnings()` to see where this warning was generated.</code></pre>
+<pre class="r"><code>p &lt;- ggplot(
   data = out_tidy,
   mapping = aes(
     x = year,
@@ -345,9 +348,9 @@ p + geom_hline(yintercept = 0, color = &quot;gray80&quot;) +
 <pre><code>## Loading required package: Matrix</code></pre>
 <pre><code>## 
 ## Attaching package: &#39;Matrix&#39;</code></pre>
-<pre><code>## The following object is masked from &#39;package:tidyr&#39;:
+<pre><code>## The following objects are masked from &#39;package:tidyr&#39;:
 ## 
-##     expand</code></pre>
+##     expand, pack, unpack</code></pre>
 <pre><code>## 
 ## Attaching package: &#39;survey&#39;</code></pre>
 <pre><code>## The following object is masked from &#39;package:graphics&#39;:
