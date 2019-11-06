@@ -1,0 +1,193 @@
+---
+title: Manjaro折腾记
+author: wyih
+date: '2019-11-06'
+slug: Manjaro
+categories:
+  - Linux
+tags:
+  - socviz
+subtitle: ''
+summary: ''
+authors: []
+lastmod: '2019-11-06T08:21:48+08:00'
+featured: no
+output:
+  blogdown::html_page:
+    toc: yes
+image:
+  caption: ''
+  focal_point: ''
+  preview_only: no
+projects: []
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(eval=FALSE)
+```
+## 缘起
+
+一切的开始应该是从折腾家庭影院开始。最早的解决方案是Windows做服务器，不太理想，于是入手了黑群晖。在黑群晖一路走来，点亮了无数新的技能点。再加上非常幸运的有公网IP，可以折腾的余地大大增加了。在群晖系统里玩了一阵子docker之后，就想着要搞一个Linux来玩玩，不想用自己的台式机折腾，查了查说最好的linux笔记本是Chromebook，说是丝滑般的Chrome体验以及是续航最久的Linux本子，加上便宜，果断入手。到后之后发现真不错，Chrome OS再加上Android再加上Linux简直了，基本上出门的需求可以满足，虽然说我也不爱出门。但玩着玩着看到人家说最好的Linux发行版是WSL，WSL需要更新windows 10，但我家里的台式机一直停留在15年的windows版本，一升级就蓝屏循环中，这回干脆咬牙升级了下系统，玩上了WSL，想用来开docker布服务吧，我看着Windows的防火墙就头疼，还是算了。但在用Chromebook的过程中发现这个触摸板手势真的很爽啊！想在Windows下也有这么爽，入了一个联想触摸板，是旧型号，只支持Windows 8的手势，突然又幻想Linux下对触摸板的驱动是不是好些呢（做梦，最后实践表明Manjaro根本只把它认成鼠标而非触摸板），于是搞起了双系统...
+
+现在的结果是爽死了，感觉自己省了好多买服务器的钱！我真是太机智了！
+
+## 折腾备忘录
+
+以防将来又需要重装，写下安装的注意事项供未来的我参考。安装iso用的是Manjaro KDE，不要用xfce版。
+
+### 安好之后换中国源
+
+```{bash}
+# 中国区镜像排序，一般选择前两个镜像
+sudo pacman-mirrors -i -c China -m rank
+##更新数据源
+sudo pacman -Syy 
+## 添加archlinuxcn源
+sudo nano /etc/pacman.conf
+```
+在文件最后添加
+```{bash}
+[archlinuxcn]
+SigLevel = Optional TrustedOnly
+Server = https://mirrors.tuna.tsinghua.edu.cn/archlinuxcn/$arch
+```
+```{bash}
+sudo pacman -Syyu //更新数据源
+sudo pacman -S archlinuxcn-keyring //安装导入GPG key
+```
+
+### N卡驱动
+
+```{bash}
+sudo mhwd -a pci nonfree 0300
+sudo reboot
+nvidia-settings
+```
+
+### 中文输入法
+```{bash}
+#中文字体
+sudo pacman -S adobe-source-han-sans-cn-fonts adobe-source-han-serif-cn-fonts
+sudo pacman -S fcitx fcitx-googlepinyin fcitx-im fcitx-configtool
+
+# 编辑 ~/.xinitrc sudo nano ~/.xprofile
+
+export GTK_IM_MODULE=fcitx
+export QT_IM_MODULE=fcitx
+export XMODIFIERS="@im=fcitx"
+```
+
+### Deepin桌面
+
+
+安装dde
+
+```{bash}
+sudo pacman -S deepin deepin-extra
+```
+
+
+修改 /etc/lightdm/lightdm.conf
+
+```{bash}
+sudo cp /etc/lightdm/lightdm.conf /etc/lightdm/lightdm.conf.bak
+
+sudo sed -i 's/greeter-session=lightdm-.*/greeter-session=lightdm-deepin-greeter/g' /etc/lightdm/lightdm.conf
+
+sudo sed -i 's/user-session=xfce/user-session=deepin/g' /etc/lightdm/lightdm.conf
+```
+
+选择桌面:注销账户，在登录界面右下角选择 deepin 桌面图标
+
+### 安装miniconda
+
+```{bash}
+wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
+sh Miniconda3-latest-Linux-x86_64.sh 
+
+# 编辑 ~/.bash_profile,在最后添加如下环境变量（注意PATH要在前面）
+export PATH="$PATH:$HOME/miniconda3/bin"
+
+# 编辑完成后
+source .bash_profile
+
+# 进入base环境或新建的python环境
+source activate
+
+pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
+```
+之后便可conda和pip安装包了。
+
+### 搭建服务并打开端口
+
+用的是[ufw](https://wiki.archlinux.org/index.php/Uncomplicated_Firewall)。
+
+#### Rstudio Server开机自动运行
+```{bash}
+sudo rstudio-server verify-installation
+
+# 查看狀態
+systemctl status rstudio-server
+# 啟動
+systemctl start rstudio-server
+# 關閉
+systemctl stop rstudio-server
+
+#auto start
+sudo systemctl enable rstudio-server
+```
+太爽了！这篇post就是在Rstudio Server写就。
+
+#### Jupyter lab
+
+
+在`/etc/systemd/system`下添加`jupyter.service`文件
+
+```{bash}
+#sudo nano /etc/systemd/system/jupyter.service
+[Unit]
+Description=Jupyter Lab
+
+[Service]
+Type=simple
+PIDFile=/run/jupyter.pid
+ExecStart=/home/wyih/anaconda3/bin/jupyter lab --ip 192.168.6.100 --config=/home/wyih/.jupyter/jupyter_notebook_config.py
+User=wyih
+Group=wyih
+WorkingDirectory=/home/wyih/Jupyter Notebook
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
+```
+开启服务
+```{bash}
+systemctl enable jupyter.service
+systemctl daemon-reload
+systemctl restart jupyter.service
+```
+
+[`jupyter_notebook_config.py`配置](https://jupyter-notebook.readthedocs.io/en/stable/public_server.html):
+
+```{python eval=FALSE}
+c.NotebookApp.ip = '*'  # 允许访问此服务器的 IP，星号表示任意 IP
+c.NotebookApp.password = u'sha1:xxx:xxx' # 之前生成的密码 hash 字串
+c.NotebookApp.open_browser = False # 运行时不打开本机浏览器
+c.NotebookApp.port = 8889 # 使用的端口
+c.NotebookApp.enable_mathjax = True # 启用 MathJax
+```
+
+
+### Chrome Remote Desktop
+
+1. installed "chrome-remote-desktop" from AUR and Chrome extension.
+1.  Executed `crd --setup` in the terminal as normal user - was requested sudo password
+1. edited ".chrome-remote-desktop-session" file deleting the # in front of "exec /usr/bin/startkde" line
+1. accepted screen resolution
+1. executed `crd --restart`
+
+好像还是不能开始自动运行CRD。
+
+### 系统备份和恢复
+
+还没研究明白。
