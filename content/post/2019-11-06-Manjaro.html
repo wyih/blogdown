@@ -6,7 +6,7 @@ slug: Manjaro
 categories:
   - Linux
 tags:
-  - socviz
+  - Linux
 subtitle: ''
 summary: ''
 authors: []
@@ -125,6 +125,7 @@ systemctl stop rstudio-server
 
 #auto start
 sudo systemctl enable rstudio-server</code></pre>
+<p>太爽了！这篇post就是在Rstudio Server写就。</p>
 </div>
 <div id="jupyter-lab" class="section level4">
 <h4>Jupyter lab</h4>
@@ -154,7 +155,9 @@ systemctl restart jupyter.service</code></pre>
 c.NotebookApp.password = u&#39;sha1:xxx:xxx&#39; # 之前生成的密码 hash 字串
 c.NotebookApp.open_browser = False # 运行时不打开本机浏览器
 c.NotebookApp.port = 8889 # 使用的端口
-c.NotebookApp.enable_mathjax = True # 启用 MathJax</code></pre>
+c.NotebookApp.allow_remote_access = True
+## 是否允许notebook在root用户下运行.
+c.NotebookApp.allow_root = True</code></pre>
 </div>
 </div>
 <div id="chrome-remote-desktop" class="section level3">

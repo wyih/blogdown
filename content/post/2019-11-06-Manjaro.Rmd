@@ -6,7 +6,7 @@ slug: Manjaro
 categories:
   - Linux
 tags:
-  - socviz
+  - Linux
 subtitle: ''
 summary: ''
 authors: []
@@ -174,7 +174,9 @@ c.NotebookApp.ip = '*'  # 允许访问此服务器的 IP，星号表示任意 IP
 c.NotebookApp.password = u'sha1:xxx:xxx' # 之前生成的密码 hash 字串
 c.NotebookApp.open_browser = False # 运行时不打开本机浏览器
 c.NotebookApp.port = 8889 # 使用的端口
-c.NotebookApp.enable_mathjax = True # 启用 MathJax
+c.NotebookApp.allow_remote_access = True
+## 是否允许notebook在root用户下运行.
+c.NotebookApp.allow_root = True
 ```
 
 
