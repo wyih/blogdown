@@ -1,0 +1,25 @@
+---
+title: The Catcher in Rye
+author: wyih
+date: '2019-11-17'
+slug: 
+categories:
+  - Books
+tags:
+  - Reading
+  - Books
+subtitle: ''
+summary: ''
+authors: []
+lastmod: '2019-11-17T08:21:48+08:00'
+featured: no
+output:
+  blogdown::html_page:
+    toc: yes
+image:
+  caption: ''
+  focal_point: ''
+  preview_only: no
+projects: []
+---
+原来The Catcher in Rye并不是讲稻草人和乌鸦的故事，是中二少年失败的离家出走尝试。如果我中二期看的这书，应该会很喜欢吧。虽然现在也挺喜欢的。更奇妙的是这么多年了，竟然一点没被剧透。To Kill A Mockingbird也是如此，并不是一个讲猎人的故事，我到底是有多文盲啊！
