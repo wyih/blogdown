@@ -1,0 +1,99 @@
+---
+title: 用R取代Stata与SAS
+author: wyih
+date: '2020-01-20'
+slug: 
+categories:
+  - Linux
+  - R
+  - Stata
+  - Workflow
+tags:
+  - R
+  - Stata
+  - Workflow
+subtitle: ''
+summary: ''
+authors: []
+lastmod: '2020-01-20:21:48+08:00'
+featured: no
+output:
+  blogdown::html_page:
+    toc: yes
+image:
+  caption: ''
+  focal_point: ''
+  preview_only: no
+projects: []
+---
+## 安装Stata
+首先安装`ncurses5-compat-libs`和`libpng12`这两个包，其次
+```{bash eval=FALSE, include=TRUE}
+% sudo -s
+
+cd /tmp/
+
+mkdir statafiles
+
+cd statafiles
+
+tar -zxf /home/you/Downloads/Stata14Linux64.tar.gz
+
+cd /usr/local
+
+mkdir stata14
+
+cd stata14
+
+/tmp/statafiles/install
+```
+安完之后把安装目录加到环境变量中去。我选择编辑`/etc/profile`加入：
+```{bash eval=FALSE, include=TRUE}
+export PATH="$PATH:/usr/local/stata14"
+```
+若想不重启就生效可以`source /etc/profile`
+
+Lic文件可以直接COPY到安装目录，或者在目录中放`stata.lic.tar.gz`。
+
+## 在R中调用Stata
+
+通过[`RStata`](https://github.com/lbraglia/RStata)实现
+
+```{r eval=FALSE}
+#run Stata in R----
+library("RStata")
+options("RStata.StataPath" = "D:\\Stata15\\StataSE-64") #office
+options("RStata.StataPath" = "/usr/local/stata14/stata") #linux #cannot use stata-se?
+options("RStata.StataVersion" = 14)
+```
+
+
+## 三种环境下数据互通
+
+R下通过两个包
+```{r eval=FALSE}
+library(haven) #nead read_dta to read dta
+library(rio) # rio::import to read sas data
+#haven::read_sas can also import sas7bdat
+f1 <- str_c(data_loc,"after2007.sas7bdat",sep = "/") 
+o1 <- str_c(data_loc,"after2007.dta",sep = "/") 
+after2007_raw <-  import(f1)
+after2007 %>% 
+  mutate_if(is.numeric, as.integer) %>% 
+  write_dta(.,o1, version = 12)
+# Because sas only supports Stata 12 files (or earlier) while haven supports stata versions 8-15.
+```
+如以上方法都无法顺利读入sas7bdat，用SAS中转
+```{r eval=FALSE}
+#import stata data file, only supports 12 or earlier
+PROC IMPORT OUT= WORK.S1 
+            DATAFILE= "E:\after2007.dta" 
+            DBMS=STATA REPLACE;
+RUN;
+
+proc export data=raw1 outfile= "D:\sample.dta" replace;
+run;
+
+```
+
+

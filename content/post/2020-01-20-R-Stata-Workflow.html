@@ -1,0 +1,97 @@
+---
+title: 用R取代Stata与SAS
+author: wyih
+date: '2020-01-20'
+slug: 
+categories:
+  - Linux
+  - R
+  - Stata
+  - Workflow
+tags:
+  - R
+  - Stata
+  - Workflow
+subtitle: ''
+summary: ''
+authors: []
+lastmod: '2020-01-20:21:48+08:00'
+featured: no
+output:
+  blogdown::html_page:
+    toc: yes
+image:
+  caption: ''
+  focal_point: ''
+  preview_only: no
+projects: []
+---
+
+<script src="/rmarkdown-libs/jquery/jquery.min.js"></script>
+<script src="/rmarkdown-libs/elevate-section-attrs/elevate-section-attrs.js"></script>
+
+<div id="TOC">
+<ul>
+<li><a href="#安装stata">安装Stata</a></li>
+<li><a href="#在r中调用stata">在R中调用Stata</a></li>
+<li><a href="#三种环境下数据互通">三种环境下数据互通</a></li>
+</ul>
+</div>
+
+<div id="安装stata" class="section level2">
+<h2>安装Stata</h2>
+<p>首先安装<code>ncurses5-compat-libs</code>和<code>libpng12</code>这两个包，其次</p>
+<pre class="bash"><code>% sudo -s
+
+cd /tmp/
+
+mkdir statafiles
+
+cd statafiles
+
+tar -zxf /home/you/Downloads/Stata14Linux64.tar.gz
+
+cd /usr/local
+
+mkdir stata14
+
+cd stata14
+
+/tmp/statafiles/install</code></pre>
+<p>安完之后把安装目录加到环境变量中去。我选择编辑<code>/etc/profile</code>加入：</p>
+<pre class="bash"><code>export PATH=&quot;$PATH:/usr/local/stata14&quot;</code></pre>
+<p>若想不重启就生效可以<code>source /etc/profile</code></p>
+<p>Lic文件可以直接COPY到安装目录，或者在目录中放<code>stata.lic.tar.gz</code>。</p>
+</div>
+<div id="在r中调用stata" class="section level2">
+<h2>在R中调用Stata</h2>
+<p>通过<a href="https://github.com/lbraglia/RStata"><code>RStata</code></a>实现</p>
+<pre class="r"><code>#run Stata in R----
+library(&quot;RStata&quot;)
+options(&quot;RStata.StataPath&quot; = &quot;D:\\Stata15\\StataSE-64&quot;) #office
+options(&quot;RStata.StataPath&quot; = &quot;/usr/local/stata14/stata&quot;) #linux #cannot use stata-se?
+options(&quot;RStata.StataVersion&quot; = 14)</code></pre>
+</div>
+<div id="三种环境下数据互通" class="section level2">
+<h2>三种环境下数据互通</h2>
+<p>R下通过两个包</p>
+<pre class="r"><code>library(haven) #nead read_dta to read dta
+library(rio) # rio::import to read sas data
+#haven::read_sas can also import sas7bdat
+f1 &lt;- str_c(data_loc,&quot;after2007.sas7bdat&quot;,sep = &quot;/&quot;) 
+o1 &lt;- str_c(data_loc,&quot;after2007.dta&quot;,sep = &quot;/&quot;) 
+after2007_raw &lt;-  import(f1)
+after2007 %&gt;% 
+  mutate_if(is.numeric, as.integer) %&gt;% 
+  write_dta(.,o1, version = 12)
+# Because sas only supports Stata 12 files (or earlier) while haven supports stata versions 8-15.</code></pre>
+<p>如以上方法都无法顺利读入sas7bdat，用SAS中转</p>
+<pre class="r"><code>#import stata data file, only supports 12 or earlier
+PROC IMPORT OUT= WORK.S1 
+            DATAFILE= &quot;E:\after2007.dta&quot; 
+            DBMS=STATA REPLACE;
+RUN;
+
+proc export data=raw1 outfile= &quot;D:\sample.dta&quot; replace;
+run;</code></pre>
+</div>
